@@ -16,6 +16,7 @@ import com.adyen.model.checkout.BillingAddress
 import com.adyen.model.checkout.BrowserInfo
 import com.adyen.model.checkout.CardDetails
 import com.adyen.model.checkout.CheckoutPaymentMethod
+import com.adyen.model.checkout.PaymentDetailsRequest
 import com.adyen.model.checkout.PaymentRequest
 import com.adyen.model.checkout.PaymentResponse
 import com.adyen.model.checkout.ThreeDSRequestData
@@ -36,7 +37,26 @@ class YourDropInService:DropInService() {
     }
 
     override fun onAdditionalDetails(actionComponentData: ActionComponentData) {
-        Log.d("check_actdata","onAdditionalDetails Clicked")
+        Log.d("check_actdata1","onAdditionalDetails Clicked")
+        Log.d("check_actdata2","${actionComponentData}")
+
+        val actionComponentJson = ActionComponentData.SERIALIZER.serialize(actionComponentData)
+        Log.d("check_actdata_json","${actionComponentJson}")
+
+        //callPaymentDetails(actionComponentJson)
+
+    }
+
+    private fun callPaymentDetails(actionComponentJson: JSONObject) {
+        // Set your X-API-KEY with the API key from the Customer Area.
+        // Set your X-API-KEY with the API key from the Customer Area.
+        val xApiKey = "ADYEN_API_KEY"
+        val client = Client(xApiKey, Environment.TEST)
+        //val checkout = Checkout(client)
+// STATE_DATA is an object passed from the front end or client app, deserialized from JSON to a data structure.
+// STATE_DATA is an object passed from the front end or client app, deserialized from JSON to a data structure.
+//        val paymentsDetailsRequest: PaymentDetailsRequest = STATE_DATA
+//        val paymentsDetailsResponse: PaymentResponse = checkout.paymentsDetails(paymentsDetailsRequest)
     }
 
     private fun makePayment(state: PaymentComponentState<*>) {
@@ -87,10 +107,10 @@ class YourDropInService:DropInService() {
             "challengeWindowSize" to "02"
         )
 
-//        val authenticationData = AuthenticationData()
-//        val threeDSRequestData = ThreeDSRequestData()
-//        threeDSRequestData.setNativeThreeDS(ThreeDSRequestData.NativeThreeDSEnum.)
-//        authenticationData.threeDSRequestData = threeDSRequestData
+        val authenticationData = AuthenticationData()
+        val threeDSRequestData = ThreeDSRequestData()
+        threeDSRequestData.setNativeThreeDS(ThreeDSRequestData.NativeThreeDSEnum.PREFERRED)
+        authenticationData.threeDSRequestData = threeDSRequestData
 
         var paymentRequest = PaymentRequest()
             .reference(referenceId)
@@ -104,7 +124,7 @@ class YourDropInService:DropInService() {
             .billingAddress(billingAddress)
             .shopperReference(data.shopperReference)
             .additionalData(additionalData)
-            //.authenticationData(authenticationData)
+            .authenticationData(authenticationData)
 
 
 
@@ -139,7 +159,7 @@ class YourDropInService:DropInService() {
             Log.d("check_submit_actionjson1","${actionObject.type}")
             Log.d("check_submit_actionjson2","${actionObject.paymentData}")
             Log.d("check_submit_actionjson3","${actionObject.paymentMethodType}")
-            sendResult(DropInServiceResult.Finished("YOUR_RESULT"))
+            //sendResult(DropInServiceResult.Finished("YOUR_RESULT"))
             sendResult(DropInServiceResult.Action(actionObject))
         }
     }
