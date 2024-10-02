@@ -16,7 +16,9 @@ import com.adyen.model.checkout.BillingAddress
 import com.adyen.model.checkout.BrowserInfo
 import com.adyen.model.checkout.CardDetails
 import com.adyen.model.checkout.CheckoutPaymentMethod
+import com.adyen.model.checkout.PaymentCompletionDetails
 import com.adyen.model.checkout.PaymentDetailsRequest
+import com.adyen.model.checkout.PaymentDetailsResponse
 import com.adyen.model.checkout.PaymentRequest
 import com.adyen.model.checkout.PaymentResponse
 import com.adyen.model.checkout.ThreeDSRequestData
@@ -30,6 +32,7 @@ import org.json.JSONObject
 
 class YourDropInService:DropInService() {
     lateinit var response: PaymentResponse
+    lateinit var responseDetails: PaymentDetailsResponse
     override fun onSubmit(state: PaymentComponentState<*>) {
         Log.d("check_state","$state")
         makePayment(state)
@@ -43,20 +46,45 @@ class YourDropInService:DropInService() {
         val actionComponentJson = ActionComponentData.SERIALIZER.serialize(actionComponentData)
         Log.d("check_actdata_json","${actionComponentJson}")
 
-        //callPaymentDetails(actionComponentJson)
+        callPaymentDetails(actionComponentJson)
 
     }
 
     private fun callPaymentDetails(actionComponentJson: JSONObject) {
-        // Set your X-API-KEY with the API key from the Customer Area.
-        // Set your X-API-KEY with the API key from the Customer Area.
-        val xApiKey = "ADYEN_API_KEY"
-        val client = Client(xApiKey, Environment.TEST)
-        //val checkout = Checkout(client)
-// STATE_DATA is an object passed from the front end or client app, deserialized from JSON to a data structure.
-// STATE_DATA is an object passed from the front end or client app, deserialized from JSON to a data structure.
-//        val paymentsDetailsRequest: PaymentDetailsRequest = STATE_DATA
-//        val paymentsDetailsResponse: PaymentResponse = checkout.paymentsDetails(paymentsDetailsRequest)
+        val client = Client(ApplicationConstant().API_KEY, Environment.LIVE)
+        Log.d("check_details","${actionComponentJson.get("details")}")
+        val j = actionComponentJson.get("details") as JSONObject
+        Log.d("check_threeDS2Result","${j.get("threeDSResult")}")
+
+       val paymentCompletionDetails =  PaymentCompletionDetails()
+            .threeDSResult(actionComponentJson.get("details").toString())
+        val paymentCompletionDetails2 =  PaymentCompletionDetails()
+            .threeDSResult(j.get("threeDSResult").toString())
+
+        val paymentDetailsRequest:PaymentDetailsRequest = PaymentDetailsRequest()
+            .details(paymentCompletionDetails2)
+
+
+        GlobalScope.launch {
+            val service = PaymentsApi(client,ApplicationConstant().BASE_URL)
+            callPaymentDetailsApi(service,paymentDetailsRequest)
+        }
+
+    }
+
+    private suspend fun callPaymentDetailsApi(
+        service: PaymentsApi,
+        paymentDetailsRequest: PaymentDetailsRequest
+    ) {
+        try {
+            val job = GlobalScope.launch(Dispatchers.IO){
+                responseDetails = service.paymentsDetails(paymentDetailsRequest)
+            }
+            job.join()
+            Log.d("check_res_details","${responseDetails}")
+        } catch (e:Exception){
+            Log.d("check_res_details_err"," Error = ${e}")
+        }
     }
 
     private fun makePayment(state: PaymentComponentState<*>) {
