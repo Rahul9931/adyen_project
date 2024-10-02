@@ -2,13 +2,6 @@ package com.example.payment_projecgt.constants
 
 class ApplicationConstant {
 
-    // others
-    val BASE_URL = "https://2817539f0073a582-DaeMobDaeSerOUe-checkout-live.adyenpayments.com/checkout/v71/"
-
-    val MERCHANT_ACCOUNT = "DaeMobDaeSerOUeECOM"
-    val API_KEY = "AQExhmfxLovKaR1Ew0m/n3Q5qf3VbIpIIJxIfGRT9X25sVNO2OP7TnocCWJ6zl9Bcc6ZahDBXVsNvuR83LVYjEgiTGAH-EJU6D5z0t9ebfcNlwVuhR1/CZZw6byzTgnqiuBP3S9c=-G#G+=nb3PYv=vKAt"
-    val CLIENT_KEY = "live_FXYWBHWMRJB7LEWPDKHT3LFUTYX5JLIT"
-
     // test
 //    val BASE_URL = "https://checkout-test.adyen.com/v71"
 //
