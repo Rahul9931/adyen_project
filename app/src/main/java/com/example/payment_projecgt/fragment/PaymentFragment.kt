@@ -63,10 +63,9 @@ class PaymentFragment : Fragment(), DropInCallback {
     }
 
     private fun callPaymentMethod() {
-        val constant = ApplicationConstant()
         // For the live environment, additionally include your liveEndpointUrlPrefix.
         // For the live environment, additionally include your liveEndpointUrlPrefix.
-        val client = Client(constant.API_KEY, Environment.LIVE)
+        val client = Client(ApplicationConstant.API_KEY, Environment.TEST)
 
         // Create the request object(s)
         val amount = Amount()
@@ -75,13 +74,13 @@ class PaymentFragment : Fragment(), DropInCallback {
 
         val paymentMethodsRequest = PaymentMethodsRequest()
             .amount(amount)
-            .merchantAccount(constant.MERCHANT_ACCOUNT)
+            .merchantAccount(ApplicationConstant.MERCHANT_ACCOUNT)
             .countryCode("NL")
             .channel(PaymentMethodsRequest.ChannelEnum.ANDROID)
             .shopperLocale("nl-NL")
 
         // Send the request
-        val service = PaymentsApi(client,constant.BASE_URL)
+        val service = PaymentsApi(client,ApplicationConstant.BASE_URL)
         GlobalScope.launch {
             callApi(service,paymentMethodsRequest)
         }
@@ -117,8 +116,8 @@ class PaymentFragment : Fragment(), DropInCallback {
 // Create a configuration object.
         val dropInConfiguration = DropInConfiguration.Builder(
             shopperLocale= Locale("en", "US"), // Use your context instead to use the device's default locale.
-            environment= com.adyen.checkout.core.Environment.EUROPE,
-            clientKey = ApplicationConstant().CLIENT_KEY
+            environment= com.adyen.checkout.core.Environment.TEST,
+            clientKey = ApplicationConstant.CLIENT_KEY
         )
 // Set the amount on the Drop-in.
             .setAmount(amount) // Optional to show the amount on the Pay button.

@@ -51,7 +51,7 @@ class YourDropInService:DropInService() {
     }
 
     private fun callPaymentDetails(actionComponentJson: JSONObject) {
-        val client = Client(ApplicationConstant().API_KEY, Environment.LIVE)
+        val client = Client(ApplicationConstant.API_KEY, Environment.TEST)
         Log.d("check_details","${actionComponentJson.get("details")}")
         val j = actionComponentJson.get("details") as JSONObject
         Log.d("check_threeDS2Result","${j.get("threeDSResult")}")
@@ -66,7 +66,7 @@ class YourDropInService:DropInService() {
 
 
         GlobalScope.launch {
-            val service = PaymentsApi(client,ApplicationConstant().BASE_URL)
+            val service = PaymentsApi(client,ApplicationConstant.BASE_URL)
             callPaymentDetailsApi(service,paymentDetailsRequest)
         }
 
@@ -90,7 +90,7 @@ class YourDropInService:DropInService() {
     private fun makePayment(state: PaymentComponentState<*>) {
         val data = state.data
         val paymentData = data.paymentMethod
-        val client = Client(ApplicationConstant().API_KEY, Environment.LIVE)
+        val client = Client(ApplicationConstant.API_KEY, Environment.TEST)
 
         // Example: Assuming you have an instance of CardPaymentMethod
         val cardPaymentMethod = paymentData as CardPaymentMethod
@@ -143,7 +143,7 @@ class YourDropInService:DropInService() {
         var paymentRequest = PaymentRequest()
             .reference(referenceId)
             .amount(amount)
-            .merchantAccount(ApplicationConstant().MERCHANT_ACCOUNT)
+            .merchantAccount(ApplicationConstant.MERCHANT_ACCOUNT)
             .paymentMethod(CheckoutPaymentMethod(cardDetails))
             .returnUrl(RedirectComponent.getReturnUrl(applicationContext))
             .browserInfo(browserInfo)
@@ -156,9 +156,10 @@ class YourDropInService:DropInService() {
 
 
 
+
 //         Send the request
         GlobalScope.launch {
-            val service = PaymentsApi(client,ApplicationConstant().BASE_URL)
+            val service = PaymentsApi(client,ApplicationConstant.BASE_URL)
             callApi(service,paymentRequest)
         }
     }
