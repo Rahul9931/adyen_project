@@ -115,7 +115,7 @@ class YourDropInService:DropInService() {
         authenticationData.attemptAuthentication = AuthenticationData.AttemptAuthenticationEnum.ALWAYS
         Log.d("check_amount","amount -> ${Gson().toJson(amount)}")
         var paymentRequest = PaymentRequest()
-            .reference(data.shopperReference)
+            .reference("345654334")    // provide unique during each payment
             .amount(amount)
             .merchantAccount(AppSharedPref.getAdyenMerchantId(this))
             .paymentMethod(CheckoutPaymentMethod(cardDetails))
