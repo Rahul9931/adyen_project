@@ -45,7 +45,7 @@ class YourDropInService:DropInService() {
 
     private fun makePayment(state: PaymentComponentState<*>) {
         val data = state.data
-        Log.d("check_reference","${state.data.shopperReference}")
+        Log.d("check_reference","PaymentComponentState data -> ${state.data.shopperReference}")
         val paymentData = data.paymentMethod
         val environment = if (AppSharedPref.getAdyenTestMode(applicationContext) == "1") {
             Environment.TEST
@@ -61,17 +61,17 @@ class YourDropInService:DropInService() {
         val serializeJson = CardPaymentMethod.SERIALIZER.serialize(cardPaymentMethod)
 
         val cardPaymentMethodData = CardPaymentMethod.SERIALIZER.deserialize(jsonObject = serializeJson )
-        Log.d("check_card_data","cart payment data 1 ${cardPaymentMethodData}")
-        Log.d("check_card_data","cart payment data 2 ${Gson().toJson(cardPaymentMethodData)}")
-        Log.d("check_card_data","cart payment data 2 ${cardPaymentMethodData.threeDS2SdkVersion}")
+        Log.d("check_card_data","card payment data 1 ${cardPaymentMethodData}")
+        Log.d("check_card_data","card payment data 2 ${Gson().toJson(cardPaymentMethodData)}")
+        Log.d("check_card_data","card payment data 2 ${cardPaymentMethodData.threeDS2SdkVersion}")
 
         // Create the request object(s)
         Log.d("check_currency","${data.amount?.currency}")
         Log.d("check_amount","${data.amount?.value}")
         val amount = Amount()
             .currency(data.amount?.currency)
-//            .value((data.amount?.value!!.toDouble() * 100).toLong())
-            .value(data.amount?.value?.toDouble()?.div(100)?.toLong())
+            .value(data.amount?.value!!)
+//            .value(data.amount?.value?.toDouble()?.div(100)?.toLong())
         Log.d("check_amount_value","amount in service -> ${amount}")
         val cardDetails = CardDetails()
             .threeDS2SdkVersion(cardPaymentMethodData.threeDS2SdkVersion)
@@ -81,6 +81,8 @@ class YourDropInService:DropInService() {
             .encryptedExpiryYear(cardPaymentMethodData.encryptedExpiryYear)
             .encryptedExpiryMonth(cardPaymentMethodData.encryptedExpiryMonth)
             .type(CardDetails.TypeEnum.SCHEME)
+            .storedPaymentMethodId(cardPaymentMethodData.storedPaymentMethodId)
+
 
 //        val billingAddress: BillingAddress = BillingAddress()
 //            .country("TO")
@@ -118,7 +120,7 @@ class YourDropInService:DropInService() {
             .merchantAccount(AppSharedPref.getAdyenMerchantId(this))
             .paymentMethod(CheckoutPaymentMethod(cardDetails))
             //.returnUrl(RedirectComponent.getReturnUrl(applicationContext))
-            .returnUrl("adyencheckout://com.egolfmegastore.android")
+            .returnUrl("adyencheckout://com.example.payment_projecgt")
             //.browserInfo(browserInfo)
             .channel(PaymentRequest.ChannelEnum.ANDROID)
             //.shopperEmail("rahulsainigoku@gmail.com")
@@ -128,7 +130,11 @@ class YourDropInService:DropInService() {
             .authenticationData(authenticationData)
 //            .enablePayOut(true)
 //            .enableRecurring(true)
+            .storePaymentMethod(true)
+            .recurringProcessingModel(PaymentRequest.RecurringProcessingModelEnum.CARDONFILE)
+
         Log.d("check_payment_req","${paymentRequest}")
+
 
 
         //         Send the request
@@ -184,23 +190,6 @@ class YourDropInService:DropInService() {
         }
     }
 
-//    private fun saveToSharedPreference(paymentDetails: PaymentDetailsResponse) {
-//        try {
-//            val editor = this.getSharedPreferences("PAYMENT_DETAILS_DATA", MODE_PRIVATE).edit()
-//            editor.putString("order_status",paymentDetails.resultCode.value)
-//            editor.putString("payment_data",paymentDetails.pspReference)
-//            editor.apply()
-//        } catch (e:Exception){
-//            Log.d("check_payapi_res_err"," Error = ${e}")
-//        }
-//
-//    }
-
-//    private fun getFromSharePreference(): String? {
-//        val read = this.getSharedPreferences("PAYMENT_DATA", AppCompatActivity.MODE_PRIVATE)
-//        return read.getString("paymentData"," ")
-//    }
-
     override fun onAdditionalDetails(actionComponentData: ActionComponentData) {
         Log.d("check_act_comp_data","actionComponentData -> ${actionComponentData}")
         val actionComponentJson = ActionComponentData.SERIALIZER.serialize(actionComponentData)
@@ -232,6 +221,7 @@ class YourDropInService:DropInService() {
             }
 
             val service = PaymentsApi(client, baseUrl)
+
 //            val service = PaymentsApi(client, ApplicationConstants.PAYMENT_API_BASE_URL)
             callPaymentDetailsApi(service,paymentDetailsRequest)
         }

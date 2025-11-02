@@ -11,23 +11,24 @@ import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import com.adyen.Client
-import com.adyen.checkout.adyen3ds2.adyen3DS2
 import com.adyen.checkout.card.card
 import com.adyen.checkout.components.core.CheckoutConfiguration
 import com.adyen.checkout.components.core.PaymentMethodsApiResponse
 import com.adyen.checkout.dropin.DropIn
 import com.adyen.checkout.dropin.DropInCallback
-import com.adyen.checkout.dropin.DropInConfiguration
 import com.adyen.checkout.dropin.DropInResult
 import com.adyen.checkout.dropin.dropIn
-import com.adyen.enums.Environment
 import com.adyen.model.checkout.Amount
 import com.adyen.model.checkout.PaymentDetailsResponse
+import com.adyen.model.checkout.PaymentMethodToStore
 import com.adyen.model.checkout.PaymentMethodsRequest
 import com.adyen.model.checkout.PaymentMethodsResponse
+import com.adyen.model.checkout.StoredPaymentMethodRequest
 import com.adyen.service.checkout.PaymentsApi
+import com.adyen.service.checkout.RecurringApi
 import com.example.payment_projecgt.R
 import com.example.payment_projecgt.constants.ApplicationConstant
+import com.example.payment_projecgt.constants.ApplicationConstant.PAYMENT_API_BASE_URL_TEST
 import com.example.payment_projecgt.data.AppSharedPref
 import com.example.payment_projecgt.databinding.FragmentPaymentBinding
 import com.example.payment_projecgt.service.YourDropInService
@@ -66,7 +67,7 @@ class PaymentFragment : Fragment(), DropInCallback {
                 ApplicationConstant.API_KEY,
                 ApplicationConstant.CLIENT_KEY,
                 "1",
-                "123456789"
+                "12345678910"
             )
         }
 
@@ -98,7 +99,7 @@ class PaymentFragment : Fragment(), DropInCallback {
         val amount = Amount()
             .currency("AED")
 //            .value(orderTotalValue.toLong())
-            .value((123.toDouble() * 100).toLong())
+            .value((11029.12f.toDouble() * 100).toLong())
         val paymentMethodsRequest = PaymentMethodsRequest()
             .amount(amount)
             .merchantAccount(merchantAccount)
@@ -107,6 +108,8 @@ class PaymentFragment : Fragment(), DropInCallback {
             .channel(PaymentMethodsRequest.ChannelEnum.ANDROID)
 //            .shopperLocale(placeOrderData.adyenData?.countryCode)
             .shopperLocale("en_AE")
+            .shopperReference(reservedOrderId)
+        
 
         // Send the request
 //        val service = PaymentsApi(client, ApplicationConstants.PAYMENT_API_BASE_URL)
@@ -118,7 +121,7 @@ class PaymentFragment : Fragment(), DropInCallback {
 
         val service = PaymentsApi(client, baseUrl)
         GlobalScope.launch {
-            callApi(service,paymentMethodsRequest,reservedOrderId,"AED", 123.00f)
+            callApi(service,paymentMethodsRequest,reservedOrderId,"AED", 11029.12f)
         }
     }
 
@@ -131,6 +134,7 @@ class PaymentFragment : Fragment(), DropInCallback {
     ) {
         val job = CoroutineScope(Dispatchers.IO).launch {
             Log.d("check_res"," payment method api req -> ${Gson().toJson(paymentMethodsRequest)}")
+
             val response = service.paymentMethods(paymentMethodsRequest)
             Log.d("check_res"," payment method api res -> ${response}")
             paymentResponse = response
@@ -141,9 +145,10 @@ class PaymentFragment : Fragment(), DropInCallback {
         val jsonResponse = JSONObject(gson.toJsonTree(paymentResponse).asJsonObject.toString())
 
         // Filter out Google Pay before processing
-        val filteredJsonResponse = filterOutGooglePay(jsonResponse)
+//        val filteredJsonResponse = filterOutGooglePay(jsonResponse)
 
-        paymentStart(filteredJsonResponse, reservedOrderId, currencyCode, orderTotalValue)
+//        paymentStart(filteredJsonResponse, reservedOrderId, currencyCode, orderTotalValue)
+        paymentStart(jsonResponse, reservedOrderId, currencyCode, orderTotalValue)
     }
 
     private fun paymentStart(
@@ -179,18 +184,21 @@ class PaymentFragment : Fragment(), DropInCallback {
             clientKey = AppSharedPref.getAdyenClientKey(requireContext())!!,
             shopperLocale = Locale("en", "IN"),
             amount = amount
+
         ) {
             dropIn {
-                setEnableRemovingStoredPaymentMethods(true)
-
+                setEnableRemovingStoredPaymentMethods(false)
+                setShowPreselectedStoredPaymentMethod(true)
             }
 
 
             card {
                 setHolderNameRequired(true)
-                if (reservedOrderId != null) {
-                    setShopperReference(reservedOrderId)
-                }
+                setShopperReference(reservedOrderId!!)
+//                if (reservedOrderId != null) {
+//                    setShopperReference(reservedOrderId)
+//                }
+
             }
 
 
@@ -255,6 +263,7 @@ class PaymentFragment : Fragment(), DropInCallback {
 
                         if (paymentResult.resultCode?.value.equals("Authorised")){
                             Log.d("check_payment","inside authorised block")
+//                            initStoredPaymentMethod(paymentResult.additionalData)
                             Toast.makeText(requireContext(),"Payment Successfull",Toast.LENGTH_LONG).show()
                         }
                         else{
@@ -292,5 +301,69 @@ class PaymentFragment : Fragment(), DropInCallback {
             }
         }
     }
+
+//    private fun initStoredPaymentMethod(additionalData: Map<String, String>) {
+//        Log.d("check_payment","final payment additionalData -> ${additionalData}")
+//
+//        val environment = if (AppSharedPref.getAdyenTestMode(requireContext()) == "1") {
+//            com.adyen.enums.Environment.TEST
+//        } else {
+//            com.adyen.enums.Environment.LIVE
+//        }
+//
+//        val client = Client(AppSharedPref.getAdyenApiKey(requireContext()), environment)
+//        val storePaymentDetailsService = RecurringApi(client,PAYMENT_API_BASE_URL_TEST)
+//        GlobalScope.launch {
+//            callStorePaymentApi(storePaymentDetailsService,additionalData)
+//        }
+//
+//    }
+
+//    private suspend fun callStorePaymentApi(
+//        storePaymentDetailsService: RecurringApi,
+//        additionalData: Map<String, String>
+//    ) {
+//
+//        // Extract values from additionalData
+//        val recurringDetailReference = additionalData["recurring.recurringDetailReference"]
+//        val shopperReference = additionalData["recurring.shopperReference"]
+//        val storedPaymentMethodId = additionalData["tokenization.storedPaymentMethodId"]
+//        val paymentMethodType = additionalData["paymentMethod"] // "visa"
+//        val recurringProcessingModel = additionalData["recurringProcessingModel"] // "CardOnFile"
+//
+//        // Create PaymentMethodToStore object
+//        val paymentMethodToStore = PaymentMethodToStore().apply {
+//            // Use the setter methods for PaymentMethodToStore
+//            type("scheme") // "visa"
+//            encryptedCardNumber("4111111111111111")
+//            holderName("test")
+//            encryptedExpiryMonth("03")
+//            encryptedExpiryYear("30")
+//            encryptedSecurityCode("737")
+//            brand("visa")
+//
+////            setStoredPaymentMethodId(storedPaymentMethodId ?: recurringDetailReference)
+//        }
+//
+//        // Create StoredPaymentMethodRequest using the builder pattern
+//        val storedPaymentMethodRequest = StoredPaymentMethodRequest()
+//            .merchantAccount(AppSharedPref.getAdyenMerchantId(requireContext())) // You need to set this
+//            .paymentMethod(paymentMethodToStore)
+//            .recurringProcessingModel(
+//                StoredPaymentMethodRequest.RecurringProcessingModelEnum.fromValue(
+//                    recurringProcessingModel ?: "CardOnFile"
+//                )
+//            )
+//            .shopperReference(shopperReference) // "123456789"
+//
+//
+//        val job = CoroutineScope(Dispatchers.IO).launch {
+//
+//            val response = storePaymentDetailsService.storedPaymentMethods(storedPaymentMethodRequest)
+//            Log.d("check_res"," store payment method api res -> ${response}")
+//
+//        }
+//        job.join()
+//    }
 
 }
